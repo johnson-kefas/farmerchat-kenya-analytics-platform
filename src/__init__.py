@@ -1,0 +1,3 @@
+"""FarmerChat Kenya Crop Analytics Dashboard package."""
+
+__version__ = "2.0.0"
