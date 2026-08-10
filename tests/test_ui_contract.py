@@ -98,7 +98,15 @@ class DashboardUIContractTests(unittest.TestCase):
         self.assertIsNone(figure.layout.width)
 
     def test_version_is_updated(self) -> None:
-        self.assertEqual(APP_VERSION, "4.0.0")
+        self.assertEqual(APP_VERSION, "4.2.0")
+
+    def test_geography_page_uses_map_instead_of_county_bar(self) -> None:
+        source = (PROJECT_ROOT / "src" / "pages" / "geography.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("county_choropleth", source)
+        self.assertIn('config={"scrollZoom": True}', source)
+        self.assertNotIn("horizontal_bar", source)
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from src.charts import donut_chart, horizontal_bar, matrix_heatmap
+from src.charts import donut_chart, matrix_heatmap
 from src.components import (
     chart,
     empty_state,
@@ -18,6 +18,11 @@ from src.components import (
 )
 from src.config import COLORS, MISSING_COUNTY, UNCLASSIFIED, ModuleConfig
 from src.formatting import compact_number, compact_percent
+from src.geography_map import (
+    county_choropleth,
+    load_kenya_boundaries,
+    prepare_county_map_data,
+)
 from src.metrics import ranked_counts, safe_share
 
 
@@ -104,10 +109,9 @@ def render(df: pd.DataFrame, module: ModuleConfig) -> None:
     scope_note(
         f"<strong>Geographic limitation.</strong> County is missing for "
         f"{compact_percent(safe_share(missing_county, len(df)))} of the selected queries. "
-        "A Kenya choropleth is intentionally omitted because no authoritative county "
-        "boundary file was supplied and only the represented counties could be mapped. "
-        "The ranking and heatmap below use geotagged records only; missing records remain "
-        "visible in the coverage KPI and donut.",
+        "The county map and heatmap use geotagged records only; missing records remain "
+        "visible in the coverage KPI and donut. All 47 counties remain on the map, and "
+        "neutral counties have no geotagged queries in the current selection.",
         kind="warning",
     )
 
@@ -123,19 +127,41 @@ def render(df: pd.DataFrame, module: ModuleConfig) -> None:
         )
         chart(coverage_fig, f"{module.key}_geo_coverage_donut")
     with right:
-        if county_ranking.empty:
-            empty_state("No geotagged records remain after the current filters.")
-        else:
-            county_fig = horizontal_bar(
-                county_ranking,
-                "County",
-                "Queries",
-                "County representation",
-                "Geotagged query volume by county",
-                height=max(500, 25 * len(county_ranking) + 170),
-                color=COLORS["teal"],
+        try:
+            county_geojson, national_geojson = load_kenya_boundaries()
+            ranking_for_map = (
+                county_ranking
+                if not county_ranking.empty
+                else pd.DataFrame(columns=["County", "Queries"])
             )
-            chart(county_fig, f"{module.key}_geo_county_ranking")
+            county_map_data, _ = prepare_county_map_data(
+                ranking_for_map, county_geojson
+            )
+            county_fig = county_choropleth(
+                county_map_data,
+                county_geojson,
+                national_geojson,
+                "County representation",
+                "Geotagged query volume by county; darker counties indicate higher "
+                "volume",
+                height=600,
+            )
+            chart(
+                county_fig,
+                f"{module.key}_geo_county_map",
+                config={"scrollZoom": True},
+            )
+            st.caption(
+                "Boundaries: [geoBoundaries gbOpen]"
+                "(https://www.geoboundaries.org/) (2020, Public Domain)."
+            )
+        except (FileNotFoundError, ValueError, OSError) as exc:
+            st.warning(
+                "The Kenya county map could not be rendered. The remaining "
+                "geographic analysis is still available.",
+                icon="⚠️",
+            )
+            st.caption(str(exc))
 
     section_title(
         "County × domain heatmap",

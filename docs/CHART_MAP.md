@@ -18,7 +18,7 @@ Livestock modules. Both modules use the same Plotly builders and palette.
 | Subdomains | Which topics lead within the selected domain? | Ranked horizontal bar | Subdomain, query count | Topic ranking |
 | Subdomains | How do domain, subdomain, and intent connect? | Sunburst | Domain, subdomain, intent, query count | Interactive taxonomy drill-down |
 | Geography | How complete is county metadata? | Donut | County present, county missing | Geographic coverage |
-| Geography | Which counties are most represented? | Ranked horizontal bar | County, query count | Representation ranking |
+| Geography | Where are geotagged queries concentrated? | Interactive 47-county choropleth | County, query count, share, rank | County representation; darker colour means higher volume |
 | Geography | How does domain mix vary by county? | Heatmap | County, domain, count or within-county share | Regional demand composition |
 | Time Trends | How does query volume move month to month? | Line | Month, query count | Production-period movement |
 | Time Trends | Where are high- and low-volume months? | Heatmap | Year, month, query count | Monthly intensity |
@@ -33,4 +33,10 @@ Livestock modules. Both modules use the same Plotly builders and palette.
 - Standard count axes begin at zero.
 - All charts use responsive width, compact number formatting, and informative
   hover labels.
+- The county map uses individual ADM1 polygons as the fill layer, a separate
+  line-only ADM0 outline, visible county borders, and neutral zero-query
+  counties.
+- The county colour range uses `log(1 + queries)` because the real Crop and
+  Livestock county distributions are highly skewed. Colourbar labels and
+  tooltips continue to show the underlying query counts.
 - MAM and OND bands provide calendar context only.

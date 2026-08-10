@@ -1,6 +1,6 @@
 # FarmerChat Kenya Analytics Platform
 
-Version 4.0.0 is a unified Streamlit and Plotly application with two modules:
+Version 4.2.0 is a unified Streamlit and Plotly application with two modules:
 
 - Crop Query Analytics
 - Livestock Query Analytics
@@ -91,7 +91,10 @@ ranked topics, and searchable tables.
 ### Geographic Analysis
 
 Compares county representation, value chains, domain mix, and classification
-coverage while keeping missing county information visible.
+coverage while keeping missing county information visible. The County
+Representation section uses a 47-county interactive choropleth. It retains
+zero-query counties in neutral grey, applies a logarithmic colour range to make
+the highly skewed volumes readable, and supports hover, zoom, pan, and reset.
 
 ### Time Trends
 
@@ -121,19 +124,25 @@ The application preserves the approved v3.0.1 responsive interface:
 ## Project structure
 
 ```text
-farmerchat_kenya_analytics_platform_v4.0.0/
+farmerchat_kenya_analytics_platform_v4.2.0/
 ├── app.py
 ├── requirements.txt
 ├── README.md
+├── .gitattributes
 ├── .streamlit/
 │   └── config.toml
 ├── assets/
-│   └── styles.css
+│   ├── styles.css
+│   └── geo/
+│       ├── BOUNDARY_SOURCE.md
+│       ├── kenya_counties.geojson
+│       └── kenya_national_boundary.geojson
 ├── data/
 │   ├── farmerchat_kenya_crop_intent_labelled_deduplicated_asset_standardized_v_4.0.0.csv
 │   └── farmerchat_kenya_livestock_intent_labelled_deduplicated_asset_standardized_v_4.0.0.csv
 ├── docs/
-│   └── CHART_MAP.md
+│   ├── CHART_MAP.md
+│   └── MAP_REVISION_V4.2.0.md
 ├── src/
 │   ├── charts.py
 │   ├── components.py
@@ -141,6 +150,7 @@ farmerchat_kenya_analytics_platform_v4.0.0/
 │   ├── data.py
 │   ├── filters.py
 │   ├── formatting.py
+│   ├── geography_map.py
 │   ├── metrics.py
 │   └── pages/
 │       ├── assets.py
@@ -152,6 +162,7 @@ farmerchat_kenya_analytics_platform_v4.0.0/
 └── tests/
     ├── test_app_integration.py
     ├── test_core.py
+    ├── test_geography_map.py
     └── test_ui_contract.py
 ```
 
@@ -162,7 +173,7 @@ farmerchat_kenya_analytics_platform_v4.0.0/
 Extract the downloaded ZIP to a normal folder, for example:
 
 ```text
-C:\Users\USER 1\Documents\farmerchat_kenya_analytics_platform_v4.0.0
+C:\Users\USER 1\Documents\farmerchat_kenya_analytics_platform_v4.2.0
 ```
 
 Moving the complete extracted folder later is safe. Keep `app.py`, `src`,
@@ -210,7 +221,8 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-No new application dependency was added for the Livestock module.
+The pinned Streamlit, Starlette, and Plotly versions reproduce the tested
+deployment environment and avoid incompatible dependency updates.
 
 ### 6. Start the platform
 
@@ -229,7 +241,7 @@ Press `Ctrl+C` in PowerShell to stop the app.
 To run it later:
 
 ```powershell
-cd "C:\Users\USER 1\Documents\farmerchat_kenya_analytics_platform_v4.0.0"
+cd "C:\Users\USER 1\Documents\farmerchat_kenya_analytics_platform_v4.2.0"
 .\.venv\Scripts\Activate.ps1
 python -m streamlit run app.py
 ```
@@ -279,9 +291,11 @@ python -m unittest discover -s tests -v
 ```
 
 The integration checks execute all six pages in both modules against the full
-packaged sources. They also check the module switch, livestock filters,
-responsive UI contract, Plotly rendering paths, date exclusion, and raw-markup
-regressions.
+packaged sources. They also verify the 47-county geometry, county joins, Crop
+and Livestock map construction, zero-query handling, filter response, separate
+national outline, module switch, responsive UI contract, date exclusion, and
+raw-markup regressions. The map regression test fails if the fill layer is
+replaced by a single Kenya-wide polygon.
 
 ## Metric notes
 
@@ -296,8 +310,15 @@ regressions.
   as missing core data.
 - Livestock categories are not inferred. For example, cattle is not relabelled
   as dairy unless the approved source explicitly provides that value.
-- The geographic page does not fabricate a choropleth. No authoritative Kenya
-  county boundary file was supplied, and county metadata is incomplete.
+- The county choropleth uses the geoBoundaries `gbOpen` Kenya ADM1 and ADM0
+  layers. The geoBoundaries API reports these layers as Public Domain. Source
+  details and official metadata links are in `assets/geo/BOUNDARY_SOURCE.md`.
+- The colour legend displays actual query counts on a logarithmic range. Query
+  counts are not changed. This prevents Nyeri's much larger volume from making
+  lower-volume counties visually indistinguishable.
+- Neutral counties have zero geotagged queries in the current filtered
+  selection. Missing county metadata remains visible in the KPI and coverage
+  donut and is not assigned to any county polygon.
 - MAM and OND are calendar reference windows. External rainfall, outbreak,
   production, or market data would be required for causal conclusions.
 

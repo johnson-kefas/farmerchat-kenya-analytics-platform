@@ -112,12 +112,18 @@ def metric_grid(metrics: list[dict[str, object]], columns: int = 4) -> None:
     st.html(f'<section class="metric-grid">{cards}</section>')
 
 
-def chart(fig: go.Figure, key: str) -> None:
+def chart(
+    fig: go.Figure,
+    key: str,
+    *,
+    config: dict | None = None,
+) -> None:
     """Render a responsive Plotly chart with export controls."""
+    chart_config = {**PLOTLY_CONFIG, **(config or {})}
     st.plotly_chart(
         fig,
         width="stretch",
-        config=PLOTLY_CONFIG,
+        config=chart_config,
         key=key,
         theme=None,
     )
